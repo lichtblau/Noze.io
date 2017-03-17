@@ -24,10 +24,8 @@ open class Socket : ErrorEmitter, LameLogObjectType {
   public var fd           : FileDescriptor?     = nil // fd can be invalid too
   public var address      : sockaddr_any?       = nil
   public var receiveSource: DispatchSourceProtocol? = nil
-  public var sendSource   : DispatchSourceProtocol? = nil
   public let Q            : DispatchQueue
   public var didRetainQ   : Bool = false // #linux-public
-  public var sendBuffer   : [Datagram] = []
 
   public init(queue          : DispatchQueue = core.Q,
               enableLogger   : Bool = false)
@@ -135,13 +133,6 @@ open class Socket : ErrorEmitter, LameLogObjectType {
     }
     receiveSource.resume()
 
-    let sendSource = DispatchSource.makeWriteSource(fileDescriptor: fd!.fd,
-                                                    queue: self.Q)
-    self.sendSource = sendSource
-    sendSource.setEventHandler {
-      self._send()
-    }
-
     // make non-blocking
     fd!.isNonBlocking = true
 
@@ -188,19 +179,19 @@ open class Socket : ErrorEmitter, LameLogObjectType {
   // TODO: node's completion callback -- not sure how important it is for
   // a transport without delivery guarantee, but would be nice to have
   public func send(_ data: [UInt8], to peer: SocketAddress) {
-      if sendBuffer.count == 0 {
-          sendSource!.resume()
-      }
-      sendBuffer.append((data, peer))
-  }
-
-  func _send() {
-      let (data, peer) = sendBuffer.removeFirst() // TODO: performance?
       if let err = sendto(self.fd!, data: data, to: peer) {
-          self.caught(error: err)
-      }
-      if sendBuffer.count == 0 {
-          sendSource!.suspend()
+          // TODO: I couldn't get write sources to work properly yet...
+          // So if the socket send buffer is full, we just discard UDP
+          // packets.
+          //
+          // But suppose the write source issue was solvable -- would we
+          // really want to buffer outgoing UDP packets?
+          if err.isWouldBlockError {
+              log.enter(); defer { log.leave() }
+              log.debug("sendto(2): \(err)")
+          } else {
+              self.caught(error: err)
+          }
       }
   }
 
