@@ -5,7 +5,6 @@ let package = Package(
   targets:      [
     Target(name: "Freddy"),
     Target(name: "CryptoSwift"),
-    Target(name: "http_parser"),
     Target(name: "base64"),
     Target(name: "mustache"),
     
@@ -82,15 +81,6 @@ let package = Package(
 	     .Target(name: "streams"),
 	     .Target(name: "process")
 	   ]),
-    Target(name: "http",
-           dependencies: [
-	     .Target(name: "http_parser"),
-	     .Target(name: "core"),
-	     .Target(name: "events"),
-	     .Target(name: "streams"),
-	     .Target(name: "net"),
-	     .Target(name: "console")
-	   ]),
     Target(name: "child_process",
            dependencies: [
 	     .Target(name: "core"),
@@ -98,28 +88,6 @@ let package = Package(
 	     .Target(name: "streams"),
 	     .Target(name: "process"),
 	     .Target(name: "fs")
-	   ]),
-    Target(name: "connect",
-           dependencies: [
-	     .Target(name: "core"),
-	     .Target(name: "xsys"),
-	     .Target(name: "events"),
-	     .Target(name: "streams"),
-	     .Target(name: "http"),	
-	     .Target(name: "console"),
-	     .Target(name: "Freddy"),
-	     .Target(name: "json"),
-	     .Target(name: "leftpad")
-           ]),
-    Target(name: "express",
-           dependencies: [
-	     .Target(name: "core"),
-	     .Target(name: "xsys"),
-	     .Target(name: "events"),
-	     .Target(name: "streams"),
-	     .Target(name: "http"),
-	     .Target(name: "connect"),
-             .Target(name: "mustache")
 	   ]),
     Target(name: "redis",
            dependencies: [
