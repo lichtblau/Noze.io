@@ -69,9 +69,10 @@ open class Socket : Duplex<SocketSourceTarget, SocketSourceTarget>,
   
   public init(_ fd         : FileDescriptor   = nil,
               queue        : DispatchQueue = core.Q,
-              enableLogger : Bool             = false)
+              enableLogger : Bool             = false,
+              tls          : Bool             = false)
   {
-    io = SocketSourceTarget(fd)
+    io = SocketSourceTarget(fd, tls: tls)
     
     if fd != nil {
       self.connectionState = .Connected // Right?

@@ -7,6 +7,7 @@
 //
 
 import Dispatch
+import Foundation
 import xsys
 import core
 
@@ -40,26 +41,28 @@ open class GCDChannelBase: CustomStringConvertible {
   public typealias TargetElement = UInt8
   
   public let log     = Logger(enabled: false)
+  public var tls     : Bool
   
   // Note: This is not necessarily set! E.g. the FileSource directly creates
   //       a channel from a path.
   public var fd      : FileDescriptor  
-  public var channel : DispatchIO! = nil
+  public var channel : DispatchIOnesque! = nil
   
   let shouldClose    = true
 
   
   // MARK: - init & teardown
   
-  public init(_ fd: FileDescriptor) {
+  public init(_ fd: FileDescriptor, tls: Bool = false) {
     self.fd = fd
+    self.tls = tls
     
     log.onAfterEnter  = { [weak self] log in self?.logState() }
     log.onBeforeLeave = { [weak self] log in self?.logState() }
   }
-  public convenience init(fd: Int32) {
+  public convenience init(fd: Int32, tls: Bool = false) {
     let fdo = FileDescriptor(fd)
-    self.init(fdo)
+    self.init(fdo, tls: tls)
   }
   deinit {
     teardown()
@@ -121,9 +124,14 @@ open class GCDChannelBase: CustomStringConvertible {
     guard fd.isValid     else { return POSIXErrorCode.EINVAL }
     guard channel == nil else { return nil }
     
-    channel = DispatchIO(type: DispatchIO.StreamType.stream,
-                         fileDescriptor: fd.fd, queue: q,
-                         cleanupHandler: cleanupChannel)
+    if tls {
+        channel = try? DispatchTLS(fileDescriptor: fd.fd, queue: q,
+                                   cleanupHandler: cleanupChannel)
+    } else {
+        channel = DispatchIO(type: DispatchIO.StreamType.stream,
+                             fileDescriptor: fd.fd, queue: q,
+                             cleanupHandler: cleanupChannel)
+    }
     guard channel != nil else { return POSIXErrorCode(rawValue: xsys.errno) }
     
     // Essentially GCD channels already implement a buffer very similar to

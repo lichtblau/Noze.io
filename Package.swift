@@ -134,7 +134,22 @@ let package = Package(
            dependencies: [
 	     .Target(name: "core"),
 	     .Target(name: "xsys")
+	   ]),
+    Target(name: "main",
+           dependencies: [
+	     .Target(name: "net")
 	   ])
   ],
   dependencies: []
 )
+
+#if os(Linux)
+package.dependencies.append(
+  .Package(url: "https://github.com/IBM-Swift/OpenSSL",
+           majorVersion: 0,
+           minor: 3)
+)
+package.exclude.append("Sources/fs/DispatchSecureTransport.swift")
+#else
+package.exclude.append("Sources/fs/DispatchOpenSSL.swift")
+#endif
